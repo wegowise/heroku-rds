@@ -141,7 +141,7 @@ module Heroku::Command; class Rds < BaseWithApp
       exec = Readline.readline("execute? [yN] ") == 'y'
     end
     if exec
-      super or raise CommandFailed, "command failed [code=#{$?.exitstatus}]: " + system.join(' ')
+      super or raise CommandFailed, "command failed [code=#{$?.exitstatus}]: " + args.join(' ')
     end
   end
 
