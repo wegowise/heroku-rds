@@ -1,5 +1,3 @@
-**This plugin is not ready to use yet. Please don't install it.**
-
 ## Installation
 
     heroku plugins:install http://github.com/wegowise/heroku-rds.git
