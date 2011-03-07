@@ -39,16 +39,14 @@ module Heroku::Command; class Rds < BaseWithApp
     raise CommandFailed, "file already exists. use --force to override." if
       File.exists?(options[:filename]) && !options[:force]
 
-    pv_installed = check_dependencies('pv', :optional => true)
-
     exec('/bin/sh', '-c',
          "mysqldump --compress --single-transaction '#{mysql_auth_args.join("' '")}' '#{db_name}' " +
-         (pv_installed ? '| pv ' : '') +
+         (pv_installed? ? '| pv ' : '') +
          %{| bzip2 > '#{options[:filename]}'})
   end
 
   def install_tools
-    check_dependencies('curl', 'unzip')
+    check_dependencies('curl', 'unzip', 'java', '/bin/bash')
 
     display "This should either be in your path, or you will have to add it to your path."
     path = Readline.readline "Path to install [#{ENV['HOME']}/bin]: "
@@ -85,7 +83,7 @@ module Heroku::Command; class Rds < BaseWithApp
     File.rename(unzipped_directory, "#{path}/rds-tools")
     Dir.rmdir("#{path}/tmp-rds-tools")
     File.open("#{path}/heroku-rds", 'w') do |f|
-      f.puts "#!/bin/sh"
+      f.puts "#!/bin/bash"
       f.puts %{if [ "$JAVA_HOME" == "" ]; then export JAVA_HOME='#{java_home}'; fi}
       f.puts %{export AWS_RDS_HOME='#{path}/rds-tools'}
       f.puts %{export EC2_CERT="#{certificate}"}
@@ -109,6 +107,42 @@ module Heroku::Command; class Rds < BaseWithApp
     security_group = args.shift || 'default'
 
     exec *%W{heroku-rds revoke-db-security-group-ingress #{security_group} -cidr-ip #{ip}/32}
+  end
+
+  def pull
+    check_dependencies('mysqldump', 'mysql')
+
+    target = args.shift || 'development'
+    if target =~ %r{://}
+      raise CommandFailed, "Can only pull into MySQL databases." unless target =~ %r{^mysql\d?://}
+      target = URI.parse(target)
+      target = {
+        'user' => target.user,
+        'password' => target.password,
+        'host' => target.host,
+        'database' => target.path.sub('/', '') }
+    else
+      raise CommandFailed, "config/database.yml not found" unless File.readable?("config/database.yml")
+      db_config = YAML.load(File.open("config/database.yml"))
+      raise CommandFailed, "environment #{target.inspect} not found in config/database.yml" unless
+        db_config.has_key?(target)
+      target = db_config[target]
+      raise CommandFailed, "Can only pull into MySQL databases." unless target['adapter'] =~ /^mysql\d?$/
+    end
+
+    display "This will erase all data in the #{target['database'].inspect} database" +
+      (target['host'].empty? ? '' : " on #{target['host']}") + "!"
+    exit unless Readline.readline("Are you sure you wish to continue? [yN] ").downcase == 'y'
+
+    exec('/bin/sh', '-c',
+         "mysqldump --compress --single-transaction '#{mysql_auth_args.join("' '")}' '#{db_name}' " +
+         (pv_installed? ? '| pv ' : '') +
+         %{| mysql --compress} +
+         ((target['user'] || '').empty? ? '' : %{ -u '#{target['user']}'}) +
+         ((target['password'] || '').empty? ? '' : %{ '-p#{target['password']}'}) +
+         ((target['host'] || '').empty? ? '' : %{ -h '#{target['host']}'}) +
+         ((target['socket'] || '').empty? ? '' : %{ - S '#{target['socket']}'}) +
+         %{ '#{target['database']}'})
   end
 
   private
@@ -161,6 +195,10 @@ module Heroku::Command; class Rds < BaseWithApp
       end
     end
     results.inject { |a, b| a && b }
+  end
+
+  def pv_installed?
+    check_dependencies('pv', :optional => true)
   end
 
 end; end
