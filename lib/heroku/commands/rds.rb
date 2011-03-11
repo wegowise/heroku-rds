@@ -49,7 +49,7 @@ module Heroku::Command; class Rds < BaseWithApp
     check_dependencies('curl', 'unzip', 'java', '/bin/bash')
 
     display "This should either be in your path, or you will have to add it to your path."
-    path = Readline.readline "Path to install [#{ENV['HOME']}/bin]: "
+    path = ask "Path to install [#{ENV['HOME']}/bin]: "
     path = File.join(ENV['HOME'], 'bin') if path.empty?
 
     raise CommandFailed, "#{path}/rds-tools already exists. Please remove before installing." if
@@ -63,16 +63,16 @@ module Heroku::Command; class Rds < BaseWithApp
     display "The default setting should work on OS X."
     display "The script will always use $JAVA_HOME if it is set at runtime."
     default_java_home = ENV['JAVA_HOME'] || '/System/Library/Frameworks/JavaVM.framework/Home'
-    java_home = Readline.readline "Set JAVA_HOME [#{default_java_home}]: "
+    java_home = ask "Set JAVA_HOME [#{default_java_home}]: "
     java_home = default_java_home if java_home.empty?
 
     display "\nCreate and download a X.509 certificate and private key at:"
     display AWS_CERTIFICATES_URL
     display "Make sure to safeguard these files! Set permissions appropriately (chmod 600 *.pem)!"
-    private_key = Readline.readline "\nFull path to your private key [$HOME/bin/rds-keys/pk.pem]: "
+    private_key = ask "\nFull path to your private key [$HOME/bin/rds-keys/pk.pem]: "
     private_key = '$HOME/bin/rds-keys/pk.pem' if private_key.empty?
 
-    certificate = Readline.readline "\nFull path to your X.509 certificate [$HOME/bin/rds-keys/cert.pem]: "
+    certificate = ask "\nFull path to your X.509 certificate [$HOME/bin/rds-keys/cert.pem]: "
     certificate = '$HOME/bin/rds-keys/cert.pem' if certificate.empty?
 
     FileUtils.mkdir_p("#{path}/tmp-rds-tools")
@@ -132,7 +132,7 @@ module Heroku::Command; class Rds < BaseWithApp
 
     display "This will erase all data in the #{target['database'].inspect} database" +
       (target['host'].empty? ? '' : " on #{target['host']}") + "!"
-    exit unless Readline.readline("Are you sure you wish to continue? [yN] ").downcase == 'y'
+    exit unless ask("Are you sure you wish to continue? [yN] ").downcase == 'y'
 
     exec('/bin/sh', '-c',
          "mysqldump --compress --single-transaction '#{mysql_auth_args.join("' '")}' '#{db_name}' " +
@@ -150,6 +150,10 @@ module Heroku::Command; class Rds < BaseWithApp
   def ip
     # simple rack app which returns your external IP
     RestClient::Resource.new("http://ip4.heroku.com")['/'].get.strip
+  end
+
+  def ask(prompt = nil)
+    Readline.readline(prompt)
   end
 
   def parse_database_uri
@@ -172,7 +176,7 @@ module Heroku::Command; class Rds < BaseWithApp
     exec = ENV['DEBUG'].nil?
     unless exec
       puts("system(): #{args.inspect}")
-      exec = Readline.readline("execute? [yN] ") == 'y'
+      exec = ask("execute? [yN] ") == 'y'
     end
     if exec
       super or raise CommandFailed, "command failed [code=#{$?.exitstatus}]: " + args.join(' ')
