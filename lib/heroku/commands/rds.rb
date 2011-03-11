@@ -192,7 +192,7 @@ module Heroku::Command; class Rds < BaseWithApp
     results = commands.collect do |cmd|
       path = `which #{cmd}`.strip
       if !options[:optional]
-        raise CommandFailed, "#{cmd}: not found in path" if path.empty?
+        raise CommandFailed, "#{cmd}: not found in path" + (cmd == 'heroku-rds' ? ' - you may need to run "heroku rds:install_tools"' : '') if path.empty?
         raise CommandFailed, "#{cmd}: not executable" unless File.executable?(path)
       else
         !path.empty? && File.executable?(path)
