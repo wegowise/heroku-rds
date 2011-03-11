@@ -84,7 +84,7 @@ module Heroku::Command; class Rds < BaseWithApp
     Dir.rmdir("#{path}/tmp-rds-tools")
     File.open("#{path}/heroku-rds", 'w') do |f|
       f.puts "#!/bin/bash"
-      f.puts %{if [ "$JAVA_HOME" == "" ]; then export JAVA_HOME='#{java_home}'; fi}
+      f.puts %{if [ "$JAVA_HOME" = "" ]; then export JAVA_HOME='#{java_home}'; fi}
       f.puts %{export AWS_RDS_HOME='#{path}/rds-tools'}
       f.puts %{export EC2_CERT="#{certificate}"}
       f.puts %{export EC2_PRIVATE_KEY="#{private_key}"}
@@ -106,7 +106,7 @@ module Heroku::Command; class Rds < BaseWithApp
     check_dependencies('heroku-rds')
     security_group = args.shift || 'default'
 
-    exec *%W{heroku-rds revoke-db-security-group-ingress #{security_group} -cidr-ip #{ip}/32}
+    exec *%W{heroku-rds revoke-db-security-group-ingress #{security_group} --cidr-ip #{ip}/32}
   end
 
   def pull
@@ -141,7 +141,7 @@ module Heroku::Command; class Rds < BaseWithApp
          ((target['user'] || '').empty? ? '' : %{ -u '#{target['user']}'}) +
          ((target['password'] || '').empty? ? '' : %{ '-p#{target['password']}'}) +
          ((target['host'] || '').empty? ? '' : %{ -h '#{target['host']}'}) +
-         ((target['socket'] || '').empty? ? '' : %{ - S '#{target['socket']}'}) +
+         ((target['socket'] || '').empty? ? '' : %{ -S '#{target['socket']}'}) +
          %{ '#{target['database']}'})
   end
 
