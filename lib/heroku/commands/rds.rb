@@ -84,7 +84,7 @@ module Heroku::Command; class Rds < BaseWithApp
     Dir.rmdir("#{path}/tmp-rds-tools")
     File.open("#{path}/heroku-rds", 'w') do |f|
       f.puts "#!/bin/bash"
-      f.puts %{if [ "$JAVA_HOME" == "" ]; then export JAVA_HOME='#{java_home}'; fi}
+      f.puts %{if [ "$JAVA_HOME" = "" ]; then export JAVA_HOME='#{java_home}'; fi}
       f.puts %{export AWS_RDS_HOME='#{path}/rds-tools'}
       f.puts %{export EC2_CERT="#{certificate}"}
       f.puts %{export EC2_PRIVATE_KEY="#{private_key}"}
