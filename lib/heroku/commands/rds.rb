@@ -141,7 +141,7 @@ module Heroku::Command; class Rds < BaseWithApp
          ((target['user'] || '').empty? ? '' : %{ -u '#{target['user']}'}) +
          ((target['password'] || '').empty? ? '' : %{ '-p#{target['password']}'}) +
          ((target['host'] || '').empty? ? '' : %{ -h '#{target['host']}'}) +
-         ((target['socket'] || '').empty? ? '' : %{ - S '#{target['socket']}'}) +
+         ((target['socket'] || '').empty? ? '' : %{ -S '#{target['socket']}'}) +
          %{ '#{target['database']}'})
   end
 
