@@ -106,7 +106,7 @@ module Heroku::Command; class Rds < BaseWithApp
     check_dependencies('heroku-rds')
     security_group = args.shift || 'default'
 
-    exec *%W{heroku-rds revoke-db-security-group-ingress #{security_group} -cidr-ip #{ip}/32}
+    exec *%W{heroku-rds revoke-db-security-group-ingress #{security_group} --cidr-ip #{ip}/32}
   end
 
   def pull
