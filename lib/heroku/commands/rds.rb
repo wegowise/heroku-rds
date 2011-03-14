@@ -9,12 +9,12 @@ module Heroku::Command; class Rds < BaseWithApp
   def initialize(*)
     super
     self.database_uri = parse_database_uri
-    validate_uri
+    validate_db(database_uri)
   end
 
   def index
     check_dependencies('mysql')
-    exec *(['mysql', '--compress'] + mysql_auth_args + [db_name])
+    exec *(['mysql', '--compress'] + mysql_args(database_uri) + [db_name])
   end
 
   def dump
@@ -99,14 +99,27 @@ module Heroku::Command; class Rds < BaseWithApp
     check_dependencies('heroku-rds')
     security_group = args.shift || 'default'
 
-    exec *%W{heroku-rds authorize-db-security-group-ingress #{security_group} --cidr-ip #{ip}/32}
+    exec *%W{heroku-rds authorize-db-security-group-ingress #{security_group} --cidr-ip #{current_ip}/32}
   end
 
   def revoke
     check_dependencies('heroku-rds')
-    security_group = args.shift || 'default'
+    while arg = args.shift
+      if arg =~ /^(?:\d{1,3}\.){3}\d{1,3}$/
+        ip = arg
+      else
+        security_group = arg
+      end
+    end
+    ip ||= current_ip
+    security_group ||= 'default'
 
     exec *%W{heroku-rds revoke-db-security-group-ingress #{security_group} --cidr-ip #{ip}/32}
+  end
+
+  def access
+    check_dependencies('heroku-rds')
+    exec *%W{heroku-rds describe-db-security-groups}
   end
 
   def pull
@@ -114,20 +127,16 @@ module Heroku::Command; class Rds < BaseWithApp
 
     target = args.shift || 'development'
     if target =~ %r{://}
-      raise CommandFailed, "Can only pull into MySQL databases." unless target =~ %r{^mysql\d?://}
       target = URI.parse(target)
-      target = {
-        'user' => target.user,
-        'password' => target.password,
-        'host' => target.host,
-        'database' => target.path.sub('/', '') }
+      validate_db(target)
+      target = uri_to_hash(target)
     else
       raise CommandFailed, "config/database.yml not found" unless File.readable?("config/database.yml")
       db_config = YAML.load(File.open("config/database.yml"))
       raise CommandFailed, "environment #{target.inspect} not found in config/database.yml" unless
         db_config.has_key?(target)
+      validate_db(db_config[target], target)
       target = db_config[target]
-      raise CommandFailed, "Can only pull into MySQL databases." unless target['adapter'] =~ /^mysql\d?$/
     end
 
     display "This will erase all data in the #{target['database'].inspect} database" +
@@ -135,19 +144,14 @@ module Heroku::Command; class Rds < BaseWithApp
     exit unless ask("Are you sure you wish to continue? [yN] ").downcase == 'y'
 
     exec('/bin/sh', '-c',
-         "mysqldump --compress --single-transaction '#{mysql_auth_args.join("' '")}' '#{db_name}' " +
-         (pv_installed? ? '| pv ' : '') +
-         %{| mysql --compress} +
-         ((target['user'] || '').empty? ? '' : %{ -u '#{target['user']}'}) +
-         ((target['password'] || '').empty? ? '' : %{ '-p#{target['password']}'}) +
-         ((target['host'] || '').empty? ? '' : %{ -h '#{target['host']}'}) +
-         ((target['socket'] || '').empty? ? '' : %{ -S '#{target['socket']}'}) +
-         %{ '#{target['database']}'})
+         'mysqldump --compress --single-transaction' + args_to_s(mysql_args(database_uri)) +
+         pv_pipe +
+         %{| mysql --compress} + args_to_s(mysql_args(target)))
   end
 
   private
 
-  def ip
+  def current_ip
     # simple rack app which returns your external IP
     RestClient::Resource.new("http://ip4.heroku.com")['/'].get.strip
   end
@@ -160,12 +164,20 @@ module Heroku::Command; class Rds < BaseWithApp
     URI.parse(heroku.config_vars(app)['DATABASE_URL'])
   end
 
-  def db_name
-    database_uri.path.sub('/', '')
+  def mysql_args(creds)
+    creds = uri_to_hash(creds) if creds.is_a?(URI)
+    args = []
+    args.concat(['-u', creds['user']]) if creds['user'] && !creds['user'].empty?
+    args << "-p#{creds['password']}" if creds['password'] && !creds['password'].empty?
+    args.concat(['-h', creds['host']]) if creds['host'] && !creds['host'].empty?
+    args.concat(['-P', creds['port']]) if creds['port'] && !creds['port'].empty?
+    args.concat(['-S', creds['socket']]) if creds['socket'] && !creds['socket'].empty?
+    args << creds['database']
+    args
   end
 
-  def mysql_auth_args
-    ['-u', database_uri.user, '-p' + database_uri.password, '-h', database_uri.host]
+  def args_to_s(args)
+    "'" + args.collect { |s| s.gsub("'", "\\'") }.join("' '") + "'"
   end
 
   def exec(*args)
@@ -183,8 +195,12 @@ module Heroku::Command; class Rds < BaseWithApp
     end
   end
 
-  def validate_uri
-    raise CommandFailed, 'You are not using a MySQL server.' unless database_uri.scheme =~ /^mysql/
+  def validate_db(creds, name = nil)
+    if creds.is_a?(URI)
+      raise CommandFailed, "#{name || creds.to_s} is not a MySQL server" unless creds.scheme =~ /^mysql/
+    else
+      raise CommandFailed, "#{name || creds.inspect} is not a MySQL server" unless creds['adapter'] =~ /^mysql/
+    end
   end
 
   def check_dependencies(*commands)
@@ -201,8 +217,20 @@ module Heroku::Command; class Rds < BaseWithApp
     results.inject { |a, b| a && b }
   end
 
+  def uri_to_hash(uri)
+    { 'user' => target.user,
+      'password' => target.password,
+      'host' => target.host,
+      'port' => target.port,
+      'database' => target.path.sub('/', '') }
+  end
+
   def pv_installed?
     check_dependencies('pv', :optional => true)
+  end
+
+  def pv_pipe
+    pv_installed? ? '| pv ' : ''
   end
 
 end; end
