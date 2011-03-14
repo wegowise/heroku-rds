@@ -144,9 +144,9 @@ module Heroku::Command; class Rds < BaseWithApp
     exit unless ask("Are you sure you wish to continue? [yN] ").downcase == 'y'
 
     exec('/bin/sh', '-c',
-         'mysqldump --compress --single-transaction' + args_to_s(mysql_args(database_uri)) +
+         'mysqldump --compress --single-transaction ' + args_to_s(mysql_args(database_uri)) +
          pv_pipe +
-         %{| mysql --compress} + args_to_s(mysql_args(target)))
+         %{| mysql --compress } + args_to_s(mysql_args(target)))
   end
 
   private
@@ -218,11 +218,11 @@ module Heroku::Command; class Rds < BaseWithApp
   end
 
   def uri_to_hash(uri)
-    { 'user' => target.user,
-      'password' => target.password,
-      'host' => target.host,
-      'port' => target.port,
-      'database' => target.path.sub('/', '') }
+    { 'user' => uri.user,
+      'password' => uri.password,
+      'host' => uri.host,
+      'port' => uri.port,
+      'database' => uri.path.sub('/', '') }
   end
 
   def pv_installed?
