@@ -167,7 +167,7 @@ module Heroku::Command; class Rds < BaseWithApp
   def mysql_args(creds)
     creds = uri_to_hash(creds) if creds.is_a?(URI)
     args = []
-    args.concat(['-u', creds['user']]) if creds['user'] && !creds['user'].empty?
+    args.concat(['-u', creds['username']]) if creds['username'] && !creds['username'].empty?
     args << "-p#{creds['password']}" if creds['password'] && !creds['password'].empty?
     args.concat(['-h', creds['host']]) if creds['host'] && !creds['host'].empty?
     args.concat(['-P', creds['port']]) if creds['port'] && !creds['port'].empty?
@@ -218,7 +218,7 @@ module Heroku::Command; class Rds < BaseWithApp
   end
 
   def uri_to_hash(uri)
-    { 'user' => uri.user,
+    { 'username' => uri.user,
       'password' => uri.password,
       'host' => uri.host,
       'port' => uri.port,
