@@ -14,7 +14,7 @@ module Heroku::Command; class Rds < BaseWithApp
 
   def index
     check_dependencies('mysql')
-    exec *(['mysql', '--compress'] + mysql_args(database_uri) + [db_name])
+    exec *(['mysql', '--compress'] + mysql_args(database_uri))
   end
 
   def dump
@@ -40,7 +40,7 @@ module Heroku::Command; class Rds < BaseWithApp
       File.exists?(options[:filename]) && !options[:force]
 
     exec('/bin/sh', '-c',
-         "mysqldump --compress --single-transaction '#{mysql_auth_args.join("' '")}' '#{db_name}' " +
+         "mysqldump --compress --single-transaction #{args_to_s(mysql_args(database_uri))}" +
          (pv_installed? ? '| pv ' : '') +
          %{| bzip2 > '#{options[:filename]}'})
   end
