@@ -11,6 +11,7 @@ Gem::Specification.new do |s|
   s.description = "Heroku plugin to aid working with RDS databases"
   s.required_rubygems_version = ">= 1.3.6"
   s.add_dependency 'heroku', '~> 2.0'
+  s.add_dependency 'fog', '>= 0.7.0'
   s.files = Dir.glob('lib/**/*.rb') + %w[README.md .gemspec init.rb]
   s.extra_rdoc_files = ["README.md", "LICENSE.txt"]
   s.license = 'MIT'

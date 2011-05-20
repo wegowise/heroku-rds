@@ -7,5 +7,4 @@ Heroku::Command::Help.group('RDS Tools') do |group|
   group.command 'rds:ingress [<SECURITY_GROUP>]', 'authorize your IP ingress access (default: \'default\')'
   group.command 'rds:revoke [<SECURITY_GROUP>] [<IP>]', 'remove previously-granted ingress access (default: \'default\')'
   group.command 'rds:access', 'show current access settings'
-  group.command 'rds:install_tools', 'interactively install the RDS command line tools'
 end
