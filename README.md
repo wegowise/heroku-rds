@@ -1,15 +1,32 @@
 ## Installation
 
+### Gem-based install (recommended)
+
+    heroku plugins:install http://github.com/hone/herogems.git
+    gem install heroku-rds
+    heroku herogems:enable heroku-rds
+    heroku rds:install_tools
+
+You can update to new releases of heroku-rds by running `gem update
+heroku-rds`.
+
+### Traditional install
+
     heroku plugins:install http://github.com/wegowise/heroku-rds.git
     heroku rds:install_tools
+
+To update, you must re-install the plugin using `heroku
+plugins:install`.
+
+### Optional Packages
 
 Commands involving data transfer support a progress bar using `pv`.
 Install `pv` to see the awesome. Most \*nix package managers have a pv
 package:
 
-    brew install pv
-    apt-get install pv
-    # etc
+    brew install pv      # OS X
+    apt-get install pv   # linux/fink
+    port install pv      # BSD/macports
 
 ## Usage
 
