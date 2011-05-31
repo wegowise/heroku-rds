@@ -32,28 +32,19 @@ module Heroku::Command; class Rds < BaseWithApp
 
     exec('/bin/sh', '-c',
          "mysqldump --compress --single-transaction #{args_to_s(mysql_args(database_uri))}" +
-         (pv_installed? ? '| pv ' : '') +
+         pv_pipe +
          %{| bzip2 > '#{options[:filename]}'})
   end
 
   def ingress
-    security_group = args.shift || 'default'
-    rds.authorize_db_security_group_ingress(security_group, 'CIDRIP' => "#{current_ip}/32")
+    ip, security_group = parse_security_group_and_ip_from_args
+    rds.authorize_db_security_group_ingress(security_group, 'CIDRIP' => ip)
     self.access
   end
 
   def revoke
-    while arg = args.shift
-      if arg =~ /^(?:\d{1,3}\.){3}\d{1,3}$/
-        ip = arg
-      else
-        security_group = arg
-      end
-    end
-    ip ||= current_ip
-    security_group ||= 'default'
-
-    rds.revoke_db_security_group_ingress(security_group, 'CIDRIP' => "#{ip}/32")
+    ip, security_group = parse_security_group_and_ip_from_args
+    rds.revoke_db_security_group_ingress(security_group, 'CIDRIP' => ip)
     self.access
   end
 
@@ -209,6 +200,22 @@ module Heroku::Command; class Rds < BaseWithApp
     @rds ||= RdsProxy.new(:aws_access_key_id => aws_access_key_id, :aws_secret_access_key => aws_secret_access_key)
   end
 
+  def parse_security_group_and_ip_from_args
+    ip = security_group = nil
+    while arg = args.shift
+      if arg =~ /^(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?$/
+        raise CommandFailed, "too many arguments passed" if ip
+        ip = arg
+      else
+        raise CommandFailed, "IP not in correct format or too many arguments passed" if security_group
+        security_group = arg
+      end
+    end
+    ip ||= current_ip + '/32'
+    ip += '/32' unless ip =~ /\/\d{1,2}$/
+    security_group ||= 'default'
+    [ip, security_group]
+  end
 
   class RdsProxy
     def initialize(*args)
