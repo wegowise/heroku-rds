@@ -38,8 +38,8 @@ module Heroku::Command; class Rds < BaseWithApp
 
   def ingress
     security_group = args.shift || 'default'
-
-    exec *%W{heroku-rds authorize-db-security-group-ingress #{security_group} --cidr-ip #{current_ip}/32}
+    rds.authorize_db_security_group_ingress(security_group, 'CIDRIP' => "#{current_ip}/32")
+    self.access
   end
 
   def revoke
@@ -54,6 +54,7 @@ module Heroku::Command; class Rds < BaseWithApp
     security_group ||= 'default'
 
     rds.revoke_db_security_group_ingress(security_group, 'CIDRIP' => "#{ip}/32")
+    self.access
   end
 
   def access
@@ -154,7 +155,7 @@ module Heroku::Command; class Rds < BaseWithApp
     results = commands.collect do |cmd|
       path = `which #{cmd}`.strip
       if !options[:optional]
-        raise CommandFailed, "#{cmd}: not found in path" + (cmd == 'heroku-rds' ? ' - you may need to run "heroku rds:install_tools"' : '') if path.empty?
+        raise CommandFailed, "#{cmd}: not found in path" if path.empty?
         raise CommandFailed, "#{cmd}: not executable" unless File.executable?(path)
       else
         !path.empty? && File.executable?(path)
@@ -205,7 +206,23 @@ module Heroku::Command; class Rds < BaseWithApp
   end
 
   def rds
-    @rds ||= Fog::AWS::RDS.new(:aws_access_key_id => aws_access_key_id, :aws_secret_access_key => aws_secret_access_key)
+    @rds ||= RdsProxy.new(:aws_access_key_id => aws_access_key_id, :aws_secret_access_key => aws_secret_access_key)
+  end
+
+
+  class RdsProxy
+    def initialize(*args)
+      @instance = Fog::AWS::RDS.new(*args)
+    end
+
+    private
+    def method_missing(sym, *args, &block)
+      begin
+        @instance.send(sym, *args, &block)
+      rescue Excon::Errors::HTTPStatusError => error
+        raise CommandFailed, Nokogiri::XML.parse(error.response.body).css('Message').first.content
+      end
+    end
   end
 
 end; end
