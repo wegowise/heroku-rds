@@ -1,5 +1,7 @@
 ## Installation
 
+Forewarning: Heroku RDS is not designed to work on Windows.
+
 ### Gem-based install (recommended)
 
 Gem-based plugins are new to the Heroku ecosystem, and require first
