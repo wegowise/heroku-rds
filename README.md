@@ -50,7 +50,6 @@ Command summary:
     rds:ingress [<SECURITY_GROUP>] [<IP>]    # authorize ingress access (defaults: 'default', current IP)
     rds:revoke [<SECURITY_GROUP>] [<IP>]     # remove previously-granted ingress access (defaults: 'default', current IP)
     rds:access                               # show current access settings
-    rds:install_tools                        # interactively install the RDS command line tools
 
 You can access this list at any time by typing `heroku help rds` and
 detailed help using `heroku help <COMMAND>`.
