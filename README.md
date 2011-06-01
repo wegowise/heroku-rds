@@ -37,22 +37,20 @@ package:
 
 ## Usage
 
-Before using any of the tools which connect to the remote database
-(`rds`, `rds:dump`, and `rds:pull`) you will need to grant your IP
-ingress access by running `rds:ingress`. Once you are finished, you may
-optionally use `rds:revoke` to revoke access from your IP.
+Access the command list at any time by typing `heroku help rds`:
 
-Command summary:
+    Usage: heroku rds
 
-    rds                                      # launch a MySQL console for your RDS server
-    rds:dump [-f/--force] [<FILE>]           # download a database dump (default: app-date.sql.bz2)
-    rds:pull [<RAILS_ENV or DATABASE_URL>]   # download the remote database into a local database (default: development)
-    rds:ingress [<SECURITY_GROUP>] [<IP>]    # authorize ingress access (defaults: 'default', current IP)
-    rds:revoke [<SECURITY_GROUP>] [<IP>]     # remove previously-granted ingress access (defaults: 'default', current IP)
-    rds:access                               # show current access settings
+     Opens a MySQL console connected to the current database. Ingress access
+     is required to run this command (use rds:ingress to grant access).
 
-You can access this list at any time by typing `heroku help rds` and
-detailed help using `heroku help <COMMAND>`.
+    Additional commands, type "heroku help COMMAND" for more details:
+
+      rds:access                            # displays current ingress access settings
+      rds:dump [FILE]                       # Download a database dump, bzipped and saved locally
+      rds:ingress [IP] [SECURITY GROUP]     # Authorize ingress access to a particular IP
+      rds:pull [RAILS_ENV or DATABASE_URL]  # downloads the remote database into a local database
+      rds:revoke [IP] [SECURITY GROUP]      # Revokes previously-granted ingress access from a particular IP
 
 ## Planned features
 
