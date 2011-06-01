@@ -3,7 +3,7 @@ require 'uri'
 
 module Heroku::Command
 
-  # Manage Amazon RDS instances
+  # manage Amazon RDS instances
   #
   class Rds < BaseWithApp
 
