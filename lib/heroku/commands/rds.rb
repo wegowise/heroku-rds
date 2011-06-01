@@ -92,9 +92,9 @@ module Heroku::Command
         group.ec2_security_groups.map do |group_access|
           [group.id, group_access['EC2SecurityGroupName'] + ' @ ' + group_access['EC2SecurityGroupOwnerId'], group_access['Status']]
         end +
-          group.ip_ranges.map do |ip_range|
+        group.ip_ranges.map do |ip_range|
           [group.id, ip_range['CIDRIP'], ip_range['Status']]
-          end
+        end
       end.flatten(1)
       data.unshift ['SECURITY GROUP', 'IP RANGE / SECURITY GROUP', 'STATUS']
       lengths = (0..2).map { |i| data.map { |d| d[i].length }.max }
