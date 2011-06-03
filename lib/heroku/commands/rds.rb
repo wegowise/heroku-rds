@@ -88,17 +88,24 @@ module Heroku::Command
     # displays current ingress access settings
     #
     def access
-      data = rds.security_groups.all.map do |group|
-        group.ec2_security_groups.map do |group_access|
-          [group.id, group_access['EC2SecurityGroupName'] + ' @ ' + group_access['EC2SecurityGroupOwnerId'], group_access['Status']]
-        end +
-        group.ip_ranges.map do |ip_range|
-          [group.id, ip_range['CIDRIP'], ip_range['Status']]
+      data = Array.new
+      rds.security_groups.all.each do |data, group|
+        group.ec2_security_groups.each do |group_access|
+          data << [group.id, group_access['EC2SecurityGroupName'] + ' @ ' + group_access['EC2SecurityGroupOwnerId'], group_access['Status']]
         end
-      end.flatten(1)
-      data.unshift ['SECURITY GROUP', 'IP RANGE / SECURITY GROUP', 'STATUS']
-      lengths = (0..2).map { |i| data.map { |d| d[i].length }.max }
-      puts data.map { |d| '%-*s  %-*s  %-*s' % [lengths[0], d[0], lengths[1], d[1], lengths[2], d[2]] }.join("\n")
+        group.ip_ranges.each do |ip_range|
+          data << [group.id, ip_range['CIDRIP'], ip_range['Status']]
+        end
+        data
+      end
+      begin
+        require 'hirb'
+        puts Hirb::Helpers::AutoTable.render(data, :headers => ['Security Group', 'IP Range/Security Group', 'Status'])
+      rescue LoadError
+        data.unshift ['SECURITY GROUP', 'IP RANGE / SECURITY GROUP', 'STATUS']
+        lengths = (0..2).map { |i| data.map { |d| d[i].length }.max }
+        puts data.map { |d| '%-*s  %-*s  %-*s' % [lengths[0], d[0], lengths[1], d[1], lengths[2], d[2]] }.join("\n")
+      end
     end
 
     # rds:pull [RAILS_ENV or DATABASE_URL]
@@ -110,8 +117,69 @@ module Heroku::Command
     # the transfer.
     #
     def pull
-      check_dependencies('mysqldump', 'mysql')
+      check_dependencies('mysqldump', 'mysql', '/bin/sh')
+      target = parse_db_location(args.shift || 'development')
 
+      display "This will erase all data in the #{target['database'].inspect} database" +
+        (target['host'].empty? ? '' : " on #{target['host']}") + "!"
+      exit unless dangerous_prompt
+
+      copy_db_to_db(database_uri, target)
+    end
+
+    # rds:push [RAILS_ENV or DATABASE_URL]
+    #
+    # uploads the local database into the remote database
+    #
+    # If a RAILS_ENV or DATABASE_URL is not specified, the current development environment
+    # is used (as read from config/database.yml). This command will confirm before executing
+    # the transfer.
+    #
+    def push
+      check_dependencies('mysqldump', 'mysql', '/bin/sh')
+      source = parse_db_location(args.shift || 'development')
+
+      display "This will replace the #{app} database with the #{source['database'].inspect} database" +
+        (source['host'].empty? ? '' : " on #{source['host']}") + "!"
+      exit unless dangerous_prompt
+
+      copy_db_to_db(source, database_uri)
+    end
+
+    # rds:import FILE
+    #
+    # uploads a local database dump into the remote databse
+    #
+    # supports gzipped, bzipped, and uncompressed sql dumps
+    #
+    def import
+      check_dependencies('mysql', '/bin/sh')
+      source = args.shift or raise CommandFailed, "You must specify a file to import from"
+      File.readable?(source) or raise CommandFailed, "#{source.inspect} is not readable"
+      command = case source
+                when /\.bz2$/
+                  check_dependencies('bzcat')
+                  'bzcat'
+                when /\.gz$/
+                  check_dependencies('gunzip')
+                  'gunzip -c'
+                else
+                  check_dependencies('cat')
+                  'cat'
+                end
+
+      display "This will replace the #{app} database with #{source}!"
+      exit unless dangerous_prompt
+
+      exec('/bin/sh', '-c',
+           "#{command} #{args_to_s(source)}" +
+           pv_pipe +
+           %{| mysql --compress } + args_to_s(mysql_args(database_uri)))
+    end
+
+    private
+
+    def parse_db_location(target)
       target = args.shift || 'development'
       if target =~ %r{://}
         target = uri_to_hash(validate_db(URI.parse(target)))
@@ -122,18 +190,19 @@ module Heroku::Command
         db_config.has_key?(target)
         target = validate_db(db_config[target], target)
       end
-
-      display "This will erase all data in the #{target['database'].inspect} database" +
-        (target['host'].empty? ? '' : " on #{target['host']}") + "!"
-      exit unless ask("Are you sure you wish to continue? [yN] ").downcase == 'y'
-
-      exec('/bin/sh', '-c',
-           'mysqldump --compress --single-transaction ' + args_to_s(mysql_args(database_uri)) +
-           pv_pipe +
-           %{| mysql --compress } + args_to_s(mysql_args(target)))
+      target
     end
 
-    private
+    def dangerous_prompt
+      ask("Are you sure you wish to continue? [yN] ").downcase == 'y'
+    end
+
+    def copy_db_to_db(src, dest)
+      exec('/bin/sh', '-c',
+           'mysqldump --compress --single-transaction ' + args_to_s(mysql_args(src)) +
+           pv_pipe +
+           %{| mysql --compress } + args_to_s(mysql_args(dest)))
+    end
 
     def current_ip
       # simple rack app which returns your external IP
@@ -160,7 +229,8 @@ module Heroku::Command
       args
     end
 
-    def args_to_s(args)
+    def args_to_s(*args)
+      args = args.flatten
       "'" + args.collect { |s| s.gsub("'", "\\'") }.join("' '") + "'"
     end
 

@@ -27,13 +27,16 @@ plugins:install`.
 
 ### Optional Packages
 
-Commands involving data transfer support a progress bar using `pv`.
-Install `pv` to see the awesome. Most package managers have a pv
-package:
+* Commands involving data transfer support a progress bar using `pv`.
+  Install `pv` to see the awesome. Most package managers have a pv
+  package:
 
     brew install pv      # OS X
     apt-get install pv   # linux/fink
     port install pv      # BSD/macports
+
+* `rds:ingress` can use hirb to format tabular data.  `gem install hirb`
+  to install it.
 
 ## Usage
 
@@ -48,18 +51,13 @@ Access the command list at any time by typing `heroku help rds`:
 
       rds:access                            # displays current ingress access settings
       rds:dump [FILE]                       # Download a database dump, bzipped and saved locally
+      rds:import FILE                       # uploads a local database dump into the remote databse
       rds:ingress [IP] [SECURITY GROUP]     # Authorize ingress access to a particular IP
       rds:pull [RAILS_ENV or DATABASE_URL]  # downloads the remote database into a local database
+      rds:push [RAILS_ENV or DATABASE_URL]  # uploads the local database into the remote database
       rds:revoke [IP] [SECURITY GROUP]      # Revokes previously-granted ingress access from a particular IP
 
 ## Planned features
-
-### Short term
-
-* rds:import - load a local database dump into the remote database
-* rds:push - export a local database into the remote database
-
-### Lower priority
 
 * rds:snapshot - capture a snapshot
 * rds:restore - restore from a snapshot
@@ -69,5 +67,5 @@ Access the command list at any time by typing `heroku help rds`:
 
 These commands are not ingress related so the target of the command
 cannot be inferred from DATABASE\_URL. This functionality is also
-readily available from the RDS dashboard, so implementing them is not a
-priority at this time.
+readily available from the RDS dashboard, so implementing them is not
+considered critical.
