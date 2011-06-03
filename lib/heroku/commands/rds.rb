@@ -127,7 +127,7 @@ module Heroku::Command
       copy_db_to_db(database_uri, target)
     end
 
-    # rds:push [RAILS_ENV or DATABSE_URL]
+    # rds:push [RAILS_ENV or DATABASE_URL]
     #
     # uploads the local database into the remote database
     #

@@ -51,8 +51,10 @@ Access the command list at any time by typing `heroku help rds`:
 
       rds:access                            # displays current ingress access settings
       rds:dump [FILE]                       # Download a database dump, bzipped and saved locally
+      rds:import FILE                       # uploads a local database dump into the remote databse
       rds:ingress [IP] [SECURITY GROUP]     # Authorize ingress access to a particular IP
       rds:pull [RAILS_ENV or DATABASE_URL]  # downloads the remote database into a local database
+      rds:push [RAILS_ENV or DATABASE_URL]  # uploads the local database into the remote database
       rds:revoke [IP] [SECURITY GROUP]      # Revokes previously-granted ingress access from a particular IP
 
 ## Planned features
