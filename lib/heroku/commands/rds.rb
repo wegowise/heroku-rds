@@ -88,14 +88,16 @@ module Heroku::Command
     # displays current ingress access settings
     #
     def access
-      data = rds.security_groups.all.map do |group|
-        group.ec2_security_groups.map do |group_access|
-          [group.id, group_access['EC2SecurityGroupName'] + ' @ ' + group_access['EC2SecurityGroupOwnerId'], group_access['Status']]
-        end +
-        group.ip_ranges.map do |ip_range|
-          [group.id, ip_range['CIDRIP'], ip_range['Status']]
+      data = Array.new
+      rds.security_groups.all.each do |data, group|
+        group.ec2_security_groups.each do |group_access|
+          data << [group.id, group_access['EC2SecurityGroupName'] + ' @ ' + group_access['EC2SecurityGroupOwnerId'], group_access['Status']]
         end
-      end.flatten(1)
+        group.ip_ranges.each do |ip_range|
+          data << [group.id, ip_range['CIDRIP'], ip_range['Status']]
+        end
+        data
+      end
       begin
         require 'hirb'
         puts Hirb::Helpers::AutoTable.render(data, :headers => ['Security Group', 'IP Range/Security Group', 'Status'])
