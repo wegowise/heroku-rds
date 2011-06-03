@@ -96,9 +96,14 @@ module Heroku::Command
           [group.id, ip_range['CIDRIP'], ip_range['Status']]
         end
       end.flatten(1)
-      data.unshift ['SECURITY GROUP', 'IP RANGE / SECURITY GROUP', 'STATUS']
-      lengths = (0..2).map { |i| data.map { |d| d[i].length }.max }
-      puts data.map { |d| '%-*s  %-*s  %-*s' % [lengths[0], d[0], lengths[1], d[1], lengths[2], d[2]] }.join("\n")
+      begin
+        require 'hirb'
+        puts Hirb::Helpers::AutoTable.render(data, :headers => ['Security Group', 'IP Range/Security Group', 'Status'])
+      rescue LoadError
+        data.unshift ['SECURITY GROUP', 'IP RANGE / SECURITY GROUP', 'STATUS']
+        lengths = (0..2).map { |i| data.map { |d| d[i].length }.max }
+        puts data.map { |d| '%-*s  %-*s  %-*s' % [lengths[0], d[0], lengths[1], d[1], lengths[2], d[2]] }.join("\n")
+      end
     end
 
     # rds:pull [RAILS_ENV or DATABASE_URL]
