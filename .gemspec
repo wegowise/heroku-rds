@@ -3,7 +3,7 @@ require 'rubygems' unless Object.const_defined?(:Gem)
 
 Gem::Specification.new do |s|
   s.name = "heroku-rds"
-  s.version = '0.4.0'
+  s.version = '0.5.0'
   s.authors = ["Jonathan Dance"]
   s.email = "rubygems@wuputah.com"
   s.homepage = "http://github.com/wegowise/heroku-rds"
