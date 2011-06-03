@@ -199,7 +199,7 @@ module Heroku::Command
 
     def copy_db_to_db(src, dest)
       exec('/bin/sh', '-c',
-           'mysqldump --compress --single-transaction ' + args_to_s(mysql_args(src)) +
+           'mysqldump --compress --single-transaction ' + args_to_s(mysql_args(src)) + ' ' +
            pv_pipe +
            %{| mysql --compress } + args_to_s(mysql_args(dest)))
     end
