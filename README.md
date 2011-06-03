@@ -31,9 +31,9 @@ plugins:install`.
   Install `pv` to see the awesome. Most package managers have a pv
   package:
 
-    brew install pv      # OS X
-    apt-get install pv   # linux/fink
-    port install pv      # BSD/macports
+<pre>brew install pv      # OS X
+apt-get install pv   # linux/fink
+port install pv      # BSD/macports</pre>
 
 * `rds:ingress` can use hirb to format tabular data.  `gem install hirb`
   to install it.
