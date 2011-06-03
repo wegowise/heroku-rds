@@ -57,13 +57,6 @@ Access the command list at any time by typing `heroku help rds`:
 
 ## Planned features
 
-### Short term
-
-* rds:import - load a local database dump into the remote database
-* rds:push - export a local database into the remote database
-
-### Lower priority
-
 * rds:snapshot - capture a snapshot
 * rds:restore - restore from a snapshot
 * rds:reboot - reboot instance
@@ -72,5 +65,5 @@ Access the command list at any time by typing `heroku help rds`:
 
 These commands are not ingress related so the target of the command
 cannot be inferred from DATABASE\_URL. This functionality is also
-readily available from the RDS dashboard, so implementing them is not a
-priority at this time.
+readily available from the RDS dashboard, so implementing them is not
+considered critical.
