@@ -35,8 +35,8 @@ plugins:install`.
 apt-get install pv   # linux/fink
 port install pv      # BSD/macports</pre>
 
-* `rds:ingress` can use hirb to format tabular data.  `gem install hirb`
-  to install it.
+* `rds:access` will use hirb if available to format the results.  `gem
+  install hirb` to see it.
 
 ## Usage
 
