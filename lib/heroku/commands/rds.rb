@@ -330,7 +330,7 @@ module Heroku::Command
       end
       ip ||= current_ip + '/32'
       ip += '/32' unless ip =~ /\/\d{1,2}$/
-        security_group ||= 'default'
+      security_group ||= 'default'
       [ip, security_group]
     end
 
