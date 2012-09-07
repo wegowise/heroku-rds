@@ -1,39 +1,24 @@
-## Installation
+# heroku-rds
 
 Forewarning: Heroku RDS is not designed to work on Windows.
 
-### Gem-based install (recommended)
+## Installation
 
-Gem-based plugins are new to the Heroku ecosystem, and require first
-installing the [Herogems](https://github.com/hone/herogems) plugin:
-
-    heroku plugins:install http://github.com/hone/herogems.git
-
-Now, simply install the gem and enable the plugin:
-
-    gem install heroku-rds
-    heroku herogems:enable heroku-rds
-
-You can update to new releases of heroku-rds by running `gem update
-heroku-rds`.
-
-### Traditional install
-
-    heroku plugins:install http://github.com/wegowise/heroku-rds.git
     gem install fog
+    heroku plugins:install https://github.com/wegowise/heroku-rds
 
-To update, you must re-install the plugin using `heroku
-plugins:install`.
+Re-install to update.
 
-### Optional Packages
+## Optional Packages
 
-* Commands involving data transfer support a progress bar using `pv`.
-  Install `pv` to see the awesome. Most package managers have a pv
-  package:
+* Commands involving data transfer support a progress bar using [Pipe Viewer](http://www.ivarch.com/programs/pv.shtml).
+  Most package managers have a pv package:
 
-<pre>brew install pv      # OS X
+```shell
+brew install pv      # OS X
 apt-get install pv   # linux/fink
 port install pv      # BSD/macports</pre>
+```
 
 * `rds:access` will use hirb if available to format the results.  `gem
   install hirb` to see it.

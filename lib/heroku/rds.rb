@@ -1,4 +1,3 @@
-# ghetto heroku gem dependency management
 if Heroku::VERSION < '2.0.0'
   puts "Please upgrade your Heroku gem"
 elsif Heroku::VERSION >= '3.0.0'
