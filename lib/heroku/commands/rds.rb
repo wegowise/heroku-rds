@@ -88,7 +88,7 @@ module Heroku::Command
     #
     def access
       data = Array.new
-      rds.security_groups.all.each do |data, group|
+      rds.security_groups.each do |group|
         group.ec2_security_groups.each do |group_access|
           data << [group.id, group_access['EC2SecurityGroupName'] + ' @ ' + group_access['EC2SecurityGroupOwnerId'], group_access['Status']]
         end
