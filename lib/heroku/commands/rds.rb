@@ -1,4 +1,3 @@
-require 'fog'
 require 'uri'
 
 module Heroku::Command
