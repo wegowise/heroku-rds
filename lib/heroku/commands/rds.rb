@@ -213,7 +213,7 @@ module Heroku::Command
     end
 
     def parse_database_uri
-      URI.parse(heroku.config_vars(app)['DATABASE_URL'])
+      URI.parse(api.get_config_vars(app).body['DATABASE_URL'])
     end
 
     def mysql_args(creds)
